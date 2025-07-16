@@ -6,6 +6,29 @@ import json
 
 app = Flask(__name__)
 
+# Get DATABASE_URL from environment variables
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Connect to the database
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
+
+# Create table if not exists
+def ensure_table_exists():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS craigslist_listings (
+                    id SERIAL PRIMARY KEY,
+                    title TEXT,
+                    url TEXT,
+                    price TEXT,
+                    posted_at TEXT
+                );
+            """)
+        conn.commit()
+
+ensure_table_exists()
 
 @app.route('/')
 def hello_world():
@@ -73,6 +96,18 @@ def scrape():
             "price": price,
             "postedAt": posted_at
         })
+
+        try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            INSERT INTO craigslist_listings (title, url, price, posted_at)
+                            VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (url) DO NOTHING;
+                        """, (title, link, price, posted_at))
+                    conn.commit()
+            except Exception as e:
+                print(f"Failed to insert listing into DB: {e}")
 
     return jsonify(listings)  # return top 10 only
 
