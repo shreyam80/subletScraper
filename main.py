@@ -3,6 +3,8 @@ from flask import Flask, jsonify, request
 import re
 import requests
 import json
+import os
+import psycopg2
 
 app = Flask(__name__)
 
