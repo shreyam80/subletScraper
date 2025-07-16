@@ -106,8 +106,8 @@ def scrape():
                             ON CONFLICT (url) DO NOTHING;
                         """, (title, link, price, posted_at))
                     conn.commit()
-            except Exception as e:
-                print(f"Failed to insert listing into DB: {e}")
+        except Exception as e:
+            print(f"Failed to insert listing into DB: {e}")
 
     return jsonify(listings)  # return top 10 only
 
